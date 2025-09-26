@@ -21,4 +21,4 @@ Datos que se usan para calcular el gasto calórico de la persona, despues se le 
 ### versión 0.1 (Por el momento solo por terminal)
 
 
-# @Author Daniel Grande "Mhayhem"
+* @Author Daniel Grande "Mhayhem"
