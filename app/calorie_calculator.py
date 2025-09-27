@@ -1,13 +1,13 @@
 # @Author Danile Grande (Mhayhem)
 
 
-def calorie_expenditure(gender: str, weigth: int, heigth: int, age: int) -> int:
+def calorie_expenditure(gender: str, weight: int, height: int, age: int) -> int:
     """calculated caloric expenditure
 
     Args:
         gender (str): user gender
-        weigth (int): user weigth
-        heigth (int): user heigth
+        weight (int): user weight
+        height (int): user height
         age (int): user age
 
     Returns:
@@ -15,9 +15,9 @@ def calorie_expenditure(gender: str, weigth: int, heigth: int, age: int) -> int:
     """
     match gender:
         case "male":
-            result = int((weigth * 10) + (heigth * 6.25) - (age * 5) + 5)
-        case "femele":
-            result = int((weigth * 10) + (heigth * 6.25) - (age * 5) - 161)
+            result = int((weight * 10) + (height * 6.25) - (age * 5) + 5)
+        case "female":
+            result = int((weight * 10) + (height * 6.25) - (age * 5) - 161)
     
     return result
 
@@ -64,33 +64,57 @@ def get_info():
         variables with information
     """
     print("Datos necesarios: peso, altura, edad y genero")
-    weigth = int(input("Peso: kg\n"))
-    heigth = int(input("Altura: cm\n"))
+    weight = int(input("Peso: kg\n"))
+    height = int(input("Altura: cm\n"))
     age = int(input("Edad: \n"))
     gender = input("Genero: [M]asculino, [F]emenino\n").lower()
     if gender == "m":
         gender = "male"
     else:
-        gender = "femele"
+        gender = "female"
         
-    return gender, weigth, heigth, age
+    return gender, weight, height, age
+
+def body_fat_percentage(weight: int, height: int, age: int, gender: str) -> float:
+    """calculated user %BF with Deurenberg formula
+    
+
+    Args:
+        weight (int): user info
+        height (int): user info
+        age (int): user info
+        gender (str): user info
+
+    Returns:
+        float: user %BF
+    """
+    match gender:
+        case "male":
+            sex = 1
+        case "female":
+            sex = 0
+    height /= 100
+    imc = weight / height**2
+    body_fat = (1.2 * imc) + (0.23 * age) - (10.8 * sex) - 5.4
+    
+    return body_fat
 
 def get_level_activity() -> str:
-    """collet activity info
+    """collect activity info
 
     Returns:
         str: user activity
     """
     print("¿cual es su nivel de actividad?")
     activty = int(input("1. Ninguna.\n"
-                        "2. Trabajo parcial.\n"
-                        "3. Trabajo completo.\n"
-                        "4. Trabajo y ejercicio.\n"))
+                        "2.  Poca.\n"
+                        "3.  Media.\n"
+                        "4.  Alta.\n"))
     match activty:
         case 1:
             activty = "nothing"
         case 2:
-            activty = "llow"
+            activty = "low"
         case 3:
             activty = "medium"
         case 4:
@@ -102,7 +126,7 @@ def get_level_activity() -> str:
     return activty
 
 def get_rest_calorie() -> int:
-    """collet user-selected deficit
+    """collect user-selected deficit
 
     Returns:
         int: user deficit
@@ -113,29 +137,32 @@ def get_rest_calorie() -> int:
     
     return rest_calorie
 
-def display_info_and_calorie(gender: str, weigth: int, heigth: int, age: int, total_calorie: int) -> str:
+def display_info_and_calorie(gender: str, weight: int, height: int, age: int, total_calorie: int, imc: float) -> str:
     """display info and result
 
     Args:
         gender (str): user info
-        weigth (int): user info
-        heigth (int): user info
+        weight (int): user info
+        height (int): user info
         age (int): user info
         total_calorie (int): user info
+        imc (float): user info
 
     Returns:
         str: user info and result deficit formula
     """
-    return f"Género: {gender}\nPeso: {weigth}\nAltura: {heigth}\nEdad: {age}\nCalórias diarias: {total_calorie}"
+    return f"Género: {gender}\nIMC: {imc:.2f} %\nPeso: {weight} kg\nAltura: {height} cm\nEdad: {age} años\nCalórias diarias: {total_calorie} kcal"
 
 def main() -> str:
-    gender, weigth, heigth, age  = get_info()
-    result = calorie_expenditure(gender, weigth, heigth, age)
+    gender, weight, height, age  = get_info()
+    result = calorie_expenditure(gender, weight, height, age)
     activity = get_level_activity()
     level = level_activity(activity)
     rest_calorie = get_rest_calorie()
     total_calorie = deficit_calories(rest_calorie, level, result)
-    print(display_info_and_calorie(gender, weigth, heigth, age, total_calorie))
+    body_fat = body_fat_percentage(weight, height, age, gender)
+    print(display_info_and_calorie(gender, weight, height, age, total_calorie, body_fat))
 
 if __name__ == "__main__":
     main()
+
