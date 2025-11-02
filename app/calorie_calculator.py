@@ -1,168 +1,200 @@
 # @Author Danile Grande (Mhayhem)
 
+from enum import Enum
 
-def calorie_expenditure(gender: str, weight: int, height: int, age: int) -> int:
-    """calculated caloric expenditure
+# Enums
+class Gender(Enum):
+    Hombre = 1
+    Mujer = 2
 
-    Args:
-        gender (str): user gender
-        weight (int): user weight
-        height (int): user height
-        age (int): user age
-
-    Returns:
-        int: total calorie needed
-    """
-    match gender:
-        case "male":
-            result = int((weight * 10) + (height * 6.25) - (age * 5) + 5)
-        case "female":
-            result = int((weight * 10) + (height * 6.25) - (age * 5) - 161)
+class ActivityLevel(Enum):
+    # Levels of physical activity with their multipliers
+    NOTHING = (1, 1.2)
+    LOW = (2, 1.37)
+    MEDIUM = (3, 1.55)
+    HIGH = (4, 1.75)
     
-    return result
-
-def level_activity(activity: str) -> int:
-    """get level activity user
-
-    Args:
-        activity (str): activity user
-
-    Returns:
-        int: activity user
-    """
-    incrase_activity = {
-        "nothing": 1.2,
-        "low": 1.37,
-        "medium": 1.55,
-        "higth": 1.75
-    }
+    def __init__(self, level_id: int, multiplier: float):
+        self.level_id = level_id
+        self.multiplier = multiplier
     
-    if activity in incrase_activity:
-        level = incrase_activity[activity]
+    @classmethod
+    def from_id(cls, level_id: int):
+        # obtain activity level
+        for level in cls:
+            if level.level_id == level_id:
+                return level
+        return None
+
+class User:
+    def __init__(self, name: str, gender: int, age: int, height: float, weight: float):
+        self.name = name.capitalize()
+        self.gender = Gender(gender)
+        self.age = age
+        self.height = height # cm
+        self.weight = weight # kg
+
+    def __str__(self):
+        return f"Nombre: {self.name}; Edad: {self.age}; Genero: {self.gender.name}; Peso: {self.weight} kg; Altura: {self.height} cm."
+
+# metrics calculator
+
+class BodyMetricsCalculator:
+    # Responsible for calculating body metrics
+    @staticmethod
+    def calculated_bmi(self, weight: float,  height_cm: float) -> float:
+        # Calculate you body mass index
+        height_m = height_cm / 100
+        return weight / (height_m ** 2)
+    
+    @staticmethod
+    # Calculate your body fat percentage (Deurenberg formula)
+    def calculate_body_fat_percentage(user: User) -> float:
+        bmi = BodyMetricsCalculator.calculated_bmi(user.weight, user.height)
+        sex_factor = 1 if user.gender == Gender.Hombre else 0
         
-        return level
+        return (1.2 * bmi) + (0.23 * user.age) + (10.8 * sex_factor) - 5.4
 
-def deficit_calories(rest_calorie: int, level: float, result: int) -> int:
-    """calorie deficit formula
+# calorie calculator
 
-    Args:
-        rest_calorie (int): user-selected deficit
-        level (float): user activity
-        result (int): user calorie needed
-
-    Returns:
-        int: calories you should per day
-    """
-    total_calorie = int((result * level) - rest_calorie)
-    
-    return total_calorie
-
-def get_info():
-    """collect user information to calculate their calorie deficit
-
-    Returns:
-        variables with information
-    """
-    print("Datos necesarios: peso, altura, edad y genero")
-    weight = int(input("Peso: kg\n"))
-    height = int(input("Altura: cm\n"))
-    age = int(input("Edad: \n"))
-    gender = input("Genero: [M]asculino, [F]emenino\n").lower()
-    if gender == "m":
-        gender = "male"
-    else:
-        gender = "female"
+class CalorieCalculator:
+    # All calorie calculator
+    @staticmethod
+    def calculated_bmr(user: User) -> float:
+        # Calculate basal mass ratio , Mifflinc-St jeor
+        base = (user.weight * 10) + {user.height * 6.25} - (user.age * 5)
         
-    return gender, weight, height, age
+        if user.gender == Gender.Hombre:
+            return base + 5
+        else: 
+            return base- 161
 
-def body_fat_percentage(weight: int, height: int, age: int, gender: str) -> float:
-    """calculated user %BF with Deurenberg formula
+    @staticmethod
+    def calculate_tdee(bmr: float, activity_level: ActivityLevel) -> float:
+        # Calculate total daily energy expenditure (tdee)
+        return bmr * activity_level.multiplier
+
+    @staticmethod
+    def calculate_target_deficit(tdee: float, deficit: int) -> float:
+        # Calculate your target calorie deficit
+        return tdee - deficit
+
+class CalorieProlife:
+    # Encapsulates all results of the user's caloric analysis.
     
-
-    Args:
-        weight (int): user info
-        height (int): user info
-        age (int): user info
-        gender (str): user info
-
-    Returns:
-        float: user %BF
-    """
-    match gender:
-        case "male":
-            sex = 1
-        case "female":
-            sex = 0
-    height /= 100
-    imc = weight / height**2
-    body_fat = (1.2 * imc) + (0.23 * age) - (10.8 * sex) - 5.4
+    def __init__(self, user: User, activity_level: ActivityLevel, deficit: int):
+        self.user = user
+        self.activity_level = activity_level
+        self.defecit = deficit
     
-    return body_fat
-
-def get_level_activity() -> str:
-    """collect activity info
-
-    Returns:
-        str: user activity
-    """
-    print("¿cual es su nivel de actividad?")
-    activty = int(input("1. Ninguna.\n"
-                        "2.  Poca.\n"
-                        "3.  Media.\n"
-                        "4.  Alta.\n"))
-    match activty:
-        case 1:
-            activty = "nothing"
-        case 2:
-            activty = "low"
-        case 3:
-            activty = "medium"
-        case 4:
-            activty = "higth"
-        case _:
-            print("No es una opción valida.")
-            get_level_activity()
+    # calculate all metrics
+        self.body_fat = BodyMetricsCalculator.calculate_body_fat_percentage(user)
+        self.bmi = BodyMetricsCalculator.calculated_bmi(user.weight, user.height)
+        self.bmr = CalorieCalculator.calculated_bmr(user)
+        self.tdee = CalorieCalculator.calculate_tdee(self.bmr, activity_level)
+        self.target_calories = CalorieCalculator.calculate_target_deficit(self.tdee, deficit)
     
-    return activty
+    def display_report(self) -> str:
+        # Generate a complete calorie profile report
+        report = []
+        report.append("*" * 60)
+        report.append("         PERFIL CALÓRICO COMPLETO")
+        report.append("*" * 60)
+        
+        report.append("\n👤 DATOS PERSONALES:")
+        report.append(f"    {self.user}")
+        
+        report.append("\n📈 ANÁLISIS CORPORAL:")
+        report.append(f"    IMC: {self.bmi:.2f} kg/m²")
+        report.append(f"    Grasa corporal estimada: {self.body_fat:.1f}%")
+        
+        report.append("\n🔥 ANÁLISIS CALÓRICO:")
+        report.append(f"    Metabolismo basal (BMR): {self.bmr:.0f} kcal/día")
+        report.append(f"    Nivel de actividad: {self.activity_level.name.capitalize()}")
+        report.append(f"    Gasto total (TDEE): {self.tdee:.0f} kcal/día")
+        
+        report.append("\n🎯 TU PLAN:")
+        report.append(f"    Déficit calórico: {self.defecit} kcal/día")
+        report.append(f"    Calórias objetivo: {self.target_calories:.0f} kcal/día")
+        report.append(f"    Pérdida estimada: ~{self.defecit * 7 / 7700:.2f} kg/semana")
+        
+        report.append("\n" + "*" * 60)
+        
+        return "\n".join(report)
 
-def get_rest_calorie() -> int:
-    """collect user-selected deficit
+# User Interface
 
-    Returns:
-        int: user deficit
-    """
-    print("Calórias para ajustar tu gasto calorico:")
-    print("(Se recomienda un déficit de entre 350 a 500 calorias diarias)")
-    rest_calorie = int(input("Déficit calórico:\n"))
+class UserInterface:
+    # Handless all user interation
+    @staticmethod
+    def get_user_data() -> User:
+        # Request and collect user data
+        
+        print("\n🏃‍➡️ CALCULADORA DE CALÓRIAS")
+        print("*" * 40)
+        
+        name = input("Nombre:\n")
+        gender = int(input("1. Masculino\n2. Femenino\nSeleccione (1-2)\n"))
+        age = int(input("Edad (años):\n"))
+        weight = float(input("Peso (kg):\n"))
+        height = float(input("Altura (cm):\n"))
+        
+        return User(name, gender, age, height, weight)
     
-    return rest_calorie
+    @staticmethod
+    def get_activity_level() -> ActivityLevel:
+        # Request activity level
+        print("💪🏻 NIVEL DE ACTIVIDAD:"
+            "1. Sedentario (poco o ningún ejercicio)"
+            "2. Ligero (ejercicio 1-3 dias/semana)"
+            "3. Moderado (ejercicio 3-5 dias/semana)"
+            "4. Alto (ejercicio 6-7 dias/semana)")
+        
+        while True:
+            level_id = int(input("Seleccione entre 1-4: \n"))
+            activity = ActivityLevel.from_id(level_id)
+            
+            if activity:
+                return activity
+            else:
+                print("❌ Opción inválida")
 
-def display_info_and_calorie(gender: str, weight: int, height: int, age: int, total_calorie: int, imc: float) -> str:
-    """display info and result
 
-    Args:
-        gender (str): user info
-        weight (int): user info
-        height (int): user info
-        age (int): user info
-        total_calorie (int): user info
-        imc (float): user info
+    @staticmethod
+    def get_calorie_deficit() -> int:
+        # request the desired calorie deficit
+        print("\n📉 DéFICIT CALÓRICO:"
+            "✅ Recomendación: 300-500 kcal para pérdida sostenible"
+            "⚠️ No exceder de 1000 kcal de déficit")
+        
+        deficit = int(input("Déficit deseado (kcal):\n"))
+        
+        if deficit > 1000:
+            print("☠️ Advertencia: Déficit muy alto, recomendamos consultar a un profesional")
 
-    Returns:
-        str: user info and result deficit formula
-    """
-    return f"Género: {gender}\nIMC: {imc:.2f} %\nPeso: {weight} kg\nAltura: {height} cm\nEdad: {age} años\nCalórias diarias: {total_calorie} kcal"
+        return deficit
 
-def main() -> str:
-    gender, weight, height, age  = get_info()
-    result = calorie_expenditure(gender, weight, height, age)
-    activity = get_level_activity()
-    level = level_activity(activity)
-    rest_calorie = get_rest_calorie()
-    total_calorie = deficit_calories(rest_calorie, level, result)
-    body_fat = body_fat_percentage(weight, height, age, gender)
-    print(display_info_and_calorie(gender, weight, height, age, total_calorie, body_fat))
+# Main program
+
+def main():
+    # full program flow
+    try:
+        # Recollect user info
+        user = UserInterface.get_user_data()
+        activity_level = UserInterface.get_activity_level()
+        deficit = UserInterface.get_calorie_deficit()
+        
+        # Create calorie profile (All internal calculations)
+        profile = CalorieProlife(user, activity_level, deficit)
+        
+        # Display report
+        print(f"\n{profile.display_report()}")
+    
+    except ValueError as e:
+        print("\❌ ERROR: Entrada inválida, ingrese valores númericos válidos.")
+    except Exception as e:
+        print(f"❌ Error inesperado: {e}")
+
 
 if __name__ == "__main__":
     main()
-
